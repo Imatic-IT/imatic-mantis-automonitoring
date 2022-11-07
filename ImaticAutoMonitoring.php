@@ -22,8 +22,10 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
     public function config(): array
     {
         return [
-            'allow_automonitoring_when_mentioned' => true,
-            'allow_automonitoring_when_assigned' => true
+            'automonitoring_when_mentioned' => true,
+            'automonitoring_when_assigned' => true,
+            'automonitoring_when_change_status' => true,
+            'self_automonitoring_when_change_status' => true
         ];
     }
 
@@ -38,7 +40,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
     public function event_bugnote_add_hook()
     {
-        if (!plugin_config_get('allow_automonitoring_when_mentioned')) {
+        if (!plugin_config_get('automonitoring_when_mentioned')) {
             return;
         }
 
@@ -67,10 +69,9 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
                         return;
                     }
 
-                    $f_usernames = $key; # RENAME ID TO KEY (KEY IS USERNAMES
+                    $f_usernames = $key; # RENAME ID TO KEY (KEY IS USERNAMES)
 
                     imatic_add_monitoring($f_usernames, $bug_id);
-
                 }
             }
         }
@@ -79,8 +80,15 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
     public function event_update_bug_hook()
     {
+        $this->imatic_automonitoring_when_assign();
+        $this->imatic_automonitoring_when_change_status();
 
-        if (!plugin_config_get('allow_automonitoring_when_assigned')) {
+    }
+
+    private function imatic_automonitoring_when_assign()
+    {
+
+        if (!plugin_config_get('automonitoring_when_assigned')) {
             return;
         }
 
@@ -90,6 +98,35 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
             $bug_id = $_POST['bug_id'];
 
             imatic_add_monitoring($t_username, $bug_id);
+        }
+    }
+
+    private function imatic_automonitoring_when_change_status()
+    {
+
+        if (!plugin_config_get('automonitoring_when_change_status')) {
+            return;
+        }
+
+        if ($_POST['status']) {
+
+            $status = $_POST['status'];
+            $bug_id = $_POST['bug_id'];
+
+            if (!empty($status) && $status < RESOLVED) {
+
+                $f_usernames = [];
+
+                if (plugin_config_get('self_automonitoring_when_change_status')) {
+                    $f_usernames[] = user_get_name(auth_get_current_user_id());
+                }
+
+                $f_usernames[] = user_get_name($_POST['handler_id']);
+
+                foreach ($f_usernames as $username) {
+                    imatic_add_monitoring($username, $bug_id);
+                }
+            }
         }
     }
 }
