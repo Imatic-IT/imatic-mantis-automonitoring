@@ -9,7 +9,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
     {
         $this->name = 'Imatic automonitoring';
         $this->description = 'Auto monitoring when someone is @mentioned or assigned or changed status ';
-        $this->version = '0.0.1';
+        $this->version = '0.1.0';
         $this->requires = [
             'MantisCore' => '2.0.0',
         ];
@@ -25,7 +25,11 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
             'automonitoring_when_mentioned' => true,
             'automonitoring_when_assigned' => true,
             'automonitoring_when_change_status' => true,
-            'self_automonitoring_when_change_status' => true
+            'self_automonitoring_when_change_status' => true,
+            'self_automonitoring_when_assigned' => [
+                'allow' => true,
+                'access_lever' => 90
+            ]
         ];
     }
 
@@ -57,7 +61,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
             $p_project_id = $bug['project_id'];
 
             #Get usernames from text (Mantis method mention.api.php)
-            $f_usernames = mention_get_users($text);
+            $f_usernames = imatic_mention_get_users($text);
 
             if (!empty($f_usernames)) {
 
@@ -87,17 +91,28 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
     private function imatic_automonitoring_when_assign()
     {
+        $self_automonitoring = plugin_config_get('self_automonitoring_when_assigned');
 
         if (!plugin_config_get('automonitoring_when_assigned')) {
             return;
         }
 
+        $current_user_id = auth_get_current_user_id();
+        $current_user = user_get_name($current_user_id);
+        $current_user_access_level = access_get_global_level( $current_user_id );
+
         if ($_POST && $_POST['action_type'] == 'assign') {
 
             $t_username = user_get_name($_POST['handler_id']);
+
             $bug_id = $_POST['bug_id'];
 
             imatic_add_monitoring($t_username, $bug_id);
+
+            if ($self_automonitoring['allow'] ){
+                if($current_user_access_level >= $self_automonitoring['access_level'])
+                imatic_add_monitoring($current_user, $bug_id);
+            }
         }
     }
 
