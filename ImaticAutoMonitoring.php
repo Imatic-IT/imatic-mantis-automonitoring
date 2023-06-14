@@ -56,7 +56,15 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
                 return;
             }
 
-            $bug_id = $_POST['bug_id'];
+
+            if (isset($_POST['bugnote_id']) && !empty($_POST['bugnote_id'])) {
+                $bug_id = bugnote_get_field($_POST['bugnote_id'], 'bug_id');
+            } elseif (isset($_POST['bug_id']) && !empty($_POST['bug_id'])) {
+                $bug_id = $_POST['bug_id'];
+            } else {
+                return;
+            }
+
             $bug = bug_get_row($bug_id);
             $p_project_id = $bug['project_id'];
 
@@ -100,7 +108,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
         $current_user_id = auth_get_current_user_id();
         $current_user = user_get_name($current_user_id);
-        $current_user_access_level = access_get_global_level( $current_user_id );
+        $current_user_access_level = access_get_global_level($current_user_id);
 
         if ($_POST && $_POST['action_type'] == 'assign') {
 
@@ -110,9 +118,9 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
             imatic_add_monitoring($t_username, $bug_id);
 
-            if ($self_automonitoring['allow'] ){
-                if($current_user_access_level >= $self_automonitoring['access_level'])
-                imatic_add_monitoring($current_user, $bug_id);
+            if ($self_automonitoring['allow']) {
+                if ($current_user_access_level >= $self_automonitoring['access_level'])
+                    imatic_add_monitoring($current_user, $bug_id);
             }
         }
     }
