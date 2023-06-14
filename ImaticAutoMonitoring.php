@@ -9,7 +9,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
     {
         $this->name = 'Imatic automonitoring';
         $this->description = 'Auto monitoring when someone is @mentioned or assigned or changed status ';
-        $this->version = '0.1.0';
+        $this->version = '0.1.1';
         $this->requires = [
             'MantisCore' => '2.0.0',
         ];
@@ -36,8 +36,8 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
     public function hooks(): array
     {
         return [
-            'EVENT_BUGNOTE_ADD' => 'event_bugnote_add_hook',
-            'EVENT_UPDATE_BUG' => 'event_update_bug_hook'
+            'EVENT_UPDATE_BUG' => 'event_update_bug_hook',
+            'EVENT_CORE_READY' => 'event_bugnote_add_hook'
         ];
     }
 
@@ -48,7 +48,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
             return;
         }
 
-        if (!empty($_POST)) {
+        if (isset($_POST['bugnote_text']) && !empty($_POST['bugnote_text'])) {
 
             $text = $_POST['bugnote_text'];
 
@@ -79,6 +79,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
                 }
             }
         }
+        return true;
     }
 
 
