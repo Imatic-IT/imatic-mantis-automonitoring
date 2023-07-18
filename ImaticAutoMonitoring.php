@@ -82,6 +82,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
                     }
 
                     $f_usernames = $key; # RENAME ID TO KEY (KEY IS USERNAMES)
+                    pre_r($f_usernames);
 
                     imatic_add_monitoring($f_usernames, $bug_id);
                 }
@@ -116,7 +117,11 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
             $bug_id = $_POST['bug_id'];
 
-            imatic_add_monitoring($t_username, $bug_id);
+            $user_id = user_get_id_by_name($t_username);
+
+            if ($user_id) {
+                imatic_add_monitoring($t_username, $bug_id);
+            }
 
             if ($self_automonitoring['allow']) {
                 if ($current_user_access_level >= $self_automonitoring['access_level'])
@@ -148,7 +153,12 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
                 $f_usernames[] = user_get_name($_POST['handler_id']);
 
                 foreach ($f_usernames as $username) {
-                    imatic_add_monitoring($username, $bug_id);
+
+                    $user_id = user_get_id_by_name($username);
+
+                    if ($user_id) {
+                        imatic_add_monitoring($username, $bug_id);
+                    }
                 }
             }
         }
