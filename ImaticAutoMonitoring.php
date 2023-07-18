@@ -82,7 +82,6 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
                     }
 
                     $f_usernames = $key; # RENAME ID TO KEY (KEY IS USERNAMES)
-                    pre_r($f_usernames);
 
                     imatic_add_monitoring($f_usernames, $bug_id);
                 }
