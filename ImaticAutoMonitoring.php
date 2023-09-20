@@ -75,14 +75,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
                 foreach ($f_usernames as $key => $user_id) {
 
-                    $accessible_projects = user_get_accessible_projects($user_id);
-
-                    if (!in_array($p_project_id, $accessible_projects)) {
-                        return;
-                    }
-
                     $f_usernames = $key; # RENAME ID TO KEY (KEY IS USERNAMES)
-
                     imatic_add_monitoring($f_usernames, $bug_id);
                 }
             }
