@@ -37,7 +37,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
     {
         return [
             'EVENT_UPDATE_BUG' => 'event_update_bug_hook',
-            'EVENT_CORE_READY' => 'event_bugnote_add_hook'
+            'EVENT_BUGNOTE_ADD' => 'event_bugnote_add_hook'
         ];
     }
 
