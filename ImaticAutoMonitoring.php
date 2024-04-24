@@ -4,6 +4,7 @@ require 'core/function.php';
 
 class ImaticAutoMonitoringPlugin extends MantisPlugin
 {
+    private const MOVE_ACTION = 'MOVE';
 
     public function register()
     {
@@ -25,6 +26,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
             'automonitoring_when_mentioned' => true,
             'automonitoring_when_assigned' => true,
             'automonitoring_when_change_status' => true,
+            'atomonitoring_when_move_to_another_project' => true,
             'self_automonitoring_when_change_status' => true,
             'self_automonitoring_when_assigned' => [
                 'allow' => true,
@@ -37,7 +39,8 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
     {
         return [
             'EVENT_UPDATE_BUG' => 'event_update_bug_hook',
-            'EVENT_BUGNOTE_ADD' => 'event_bugnote_add_hook'
+            'EVENT_BUGNOTE_ADD' => 'event_bugnote_add_hook',
+            'EVENT_BUG_ACTION' => 'event_bug_action_hook'
         ];
     }
 
@@ -124,7 +127,6 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
     private function imatic_automonitoring_when_change_status()
     {
-
         if (!plugin_config_get('automonitoring_when_change_status')) {
             return;
         }
@@ -150,6 +152,41 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
                     if ($user_id) {
                         imatic_add_monitoring($username, $bug_id);
+                    }
+                }
+            }
+        }
+    }
+
+    /*
+     *  This add automonitoring to user when he move the issue to another project
+     *  It is prevent to add monitoring to user who is not in the project ( if user move the issue to another project)
+     *  It is prevent before lost access to the issue (if user move the issue to another project, where he does not have access)
+     */
+    public function event_bug_action_hook()
+    {
+        if (!plugin_config_get('atomonitoring_when_move_to_another_project')) {
+            return;
+        }
+
+        $this->imatic_add_monitoring_when_move_to_another_project();
+
+        return $_POST;
+    }
+    private function imatic_add_monitoring_when_move_to_another_project(): void
+    {
+        if (isset($_POST['action']) && !empty($_POST['action'])) {
+            $action = $_POST['action'];
+
+            if ($action == self::MOVE_ACTION) {
+                $current_user_username = user_get_name(auth_get_current_user_id());
+
+                $bugIds = $_POST['bug_arr'];
+
+                foreach ($bugIds as $bugId) {
+
+                    if ($current_user_username && $bugId) {
+                        imatic_add_monitoring($current_user_username, $bugId);
                     }
                 }
             }
