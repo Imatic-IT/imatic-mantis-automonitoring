@@ -25,6 +25,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
         return [
             'automonitoring_when_mentioned' => true,
             'automonitoring_when_assigned' => true,
+            'automonitoring_when_created' => true,
             'automonitoring_when_change_status' => true,
             'atomonitoring_when_move_to_another_project' => true,
             'self_automonitoring_when_change_status' => true,
@@ -40,7 +41,8 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
         return [
             'EVENT_UPDATE_BUG' => 'event_update_bug_hook',
             'EVENT_BUGNOTE_ADD' => 'event_bugnote_add_hook',
-            'EVENT_BUG_ACTION' => 'event_bug_action_hook'
+            'EVENT_BUG_ACTION' => 'event_bug_action_hook',
+            'EVENT_REPORT_BUG' => 'event_bug_add_hook',
         ];
     }
 
@@ -191,5 +193,13 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
                 }
             }
         }
+    }
+
+    public function event_bug_add_hook($p_event, BugData $p_bug, $p_bug_id)
+    {
+        if (!plugin_config_get('automonitoring_when_created')) {
+            return;
+        }
+        imatic_add_monitoring(user_get_name($p_bug->reporter_id), $p_bug_id);
     }
 }
