@@ -42,7 +42,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
             'EVENT_UPDATE_BUG' => 'event_update_bug_hook',
             'EVENT_BUGNOTE_ADD' => 'event_bugnote_add_hook',
             'EVENT_BUG_ACTION' => 'event_bug_action_hook',
-            'EVENT_REPORT_BUG' => 'event_bug_add_hook',
+//            'EVENT_REPORT_BUG' => 'event_bug_add_hook',
         ];
     }
 
@@ -197,6 +197,7 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
 
     public function event_bug_add_hook($p_event, BugData $p_bug, $p_bug_id)
     {
+        // TODO: LATER - exclude emailReporters
         if (!plugin_config_get('automonitoring_when_created')) {
             return;
         }
