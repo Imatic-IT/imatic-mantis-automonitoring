@@ -43,6 +43,10 @@ function imatic_add_monitoring_users(array $p_user_ids, $p_bug_id)
             continue;
         }
 
+        if (imatic_is_excluded_from_monitoring($t_user_id)) {
+            continue;
+        }
+
         $t_data = array(
             'query' => array('issue_id' => $p_bug_id),
             'payload' => array('users' => array(array('id' => $t_user_id))),
@@ -55,6 +59,43 @@ function imatic_add_monitoring_users(array $p_user_ids, $p_bug_id)
             continue;
         }
     }
+}
+
+/**
+ * Whether the user is excluded from automonitoring.
+ *
+ * Service accounts such as the EmailReporting user report issues and add notes
+ * without being members of the project, so monitoring them is both pointless
+ * and rejected by MonitorAddCommand. Configure them once instead of granting
+ * the account access to every project.
+ *
+ * Accepts user ids and user names, so the option can be filled in from the
+ * Configuration Report screen with whatever is at hand.
+ *
+ * @param int $p_user_id
+ * @return bool
+ */
+function imatic_is_excluded_from_monitoring($p_user_id)
+{
+    static $s_excluded_ids = null;
+
+    if ($s_excluded_ids === null) {
+        $s_excluded_ids = array();
+
+        foreach ((array)plugin_config_get('automonitoring_excluded_users') as $t_excluded) {
+            if (is_numeric($t_excluded)) {
+                $s_excluded_ids[] = (int)$t_excluded;
+                continue;
+            }
+
+            $t_excluded_id = user_get_id_by_name(trim($t_excluded));
+            if ($t_excluded_id) {
+                $s_excluded_ids[] = (int)$t_excluded_id;
+            }
+        }
+    }
+
+    return in_array((int)$p_user_id, $s_excluded_ids, true);
 }
 
 /**
