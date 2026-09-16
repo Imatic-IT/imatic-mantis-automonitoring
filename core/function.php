@@ -4,23 +4,57 @@
 # MANTIS METHODS FROM bug_monitor_add.php
 function imatic_add_monitoring($f_usernames, $bug_id)
 {
-
-    if (!is_blank($f_usernames)) {
-        $t_usernames = preg_split('/[,|]/', $f_usernames, -1, PREG_SPLIT_NO_EMPTY);
-        $t_users = array();
-        foreach ($t_usernames as $t_username) {
-            $t_users[] = array('name_or_realname' => trim($t_username));
-        }
-        $t_payload['users'] = $t_users;
+    if (is_blank($f_usernames)) {
+        return;
     }
-    $t_data = array(
-        'query' => array('issue_id' => $bug_id),
-        'payload' => $t_payload,
-    );
 
-    $t_command = new MonitorAddCommand($t_data);
-    $t_command->execute();
-    # END MANTIS METHODS FROM bug_monitor_add.php
+    $t_usernames = preg_split('/[,|]/', $f_usernames, -1, PREG_SPLIT_NO_EMPTY);
+
+    $t_user_ids = array();
+    foreach ($t_usernames as $t_username) {
+        $t_user_ids[] = user_get_id_by_name(trim($t_username));
+    }
+
+    imatic_add_monitoring_users($t_user_ids, $bug_id);
+}
+
+/**
+ * Add monitoring for the given user ids.
+ *
+ * Each user is added separately and failures are swallowed: MonitorAddCommand
+ * throws when the target user has no access to the project or when the acting
+ * user may not add monitors for others. Automonitoring is a convenience, it
+ * must never abort the bug update that triggered it.
+ *
+ * @param array $p_user_ids
+ * @param int   $p_bug_id
+ * @return void
+ */
+function imatic_add_monitoring_users(array $p_user_ids, $p_bug_id)
+{
+    if (!$p_bug_id) {
+        return;
+    }
+
+    $t_user_ids = array_unique(array_filter(array_map('intval', $p_user_ids)));
+
+    foreach ($t_user_ids as $t_user_id) {
+        if (!user_exists($t_user_id)) {
+            continue;
+        }
+
+        $t_data = array(
+            'query' => array('issue_id' => $p_bug_id),
+            'payload' => array('users' => array(array('id' => $t_user_id))),
+        );
+
+        try {
+            $t_command = new MonitorAddCommand($t_data);
+            $t_command->execute();
+        } catch (Exception $e) {
+            continue;
+        }
+    }
 }
 
 /**
