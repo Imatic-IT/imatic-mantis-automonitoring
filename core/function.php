@@ -141,6 +141,9 @@ function imatic_mention_check_access($p_bug_id, $p_text, $p_private)
         return $t_result;
     }
 
+    # "@param", "@media" and the like inside code are not mentions worth a warning.
+    $p_text = imatic_mention_strip_code($p_text);
+
     $t_candidates = imatic_mention_get_candidates($p_text);
     if (empty($t_candidates)) {
         return $t_result;
@@ -174,6 +177,25 @@ function imatic_mention_check_access($p_bug_id, $p_text, $p_private)
     }
 
     return $t_result;
+}
+
+/**
+ * Remove Markdown code from a note: fenced blocks (``` or ~~~, an unclosed one
+ * runs to the end because the note is still being typed) and inline `code`.
+ *
+ * Only used for the while-typing warning; the monitors added on save follow
+ * core's mention processing, which does not know about code.
+ *
+ * @param string $p_text
+ * @return string
+ */
+function imatic_mention_strip_code($p_text)
+{
+    $t_text = preg_replace('/^[ \t]*(`{3,}|~{3,})[^\n]*\n.*?(?:^[ \t]*\1[ \t]*$|\z)/ms', ' ', $p_text);
+    # Inline code: a backtick run closed by a run of the same length (may span lines).
+    $t_text = preg_replace('/(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/', ' ', $t_text);
+
+    return $t_text === null ? $p_text : $t_text;
 }
 
 /**

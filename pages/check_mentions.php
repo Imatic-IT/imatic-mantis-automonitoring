@@ -16,6 +16,12 @@ header('Content-Type: application/json');
 
 auth_ensure_user_authenticated();
 
+if (!plugin_config_get('mention_access_warning')) {
+    http_response_code(404);
+    echo json_encode(['error' => 'Mention access warning is disabled']);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Only POST requests are allowed']);
