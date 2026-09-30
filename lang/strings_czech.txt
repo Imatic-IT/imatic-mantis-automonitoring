@@ -1,0 +1,6 @@
+<?php
+
+$s_plugin_ImaticAutoMonitoring_title = 'Imatic automonitoring';
+$s_plugin_ImaticAutoMonitoring_mention_no_access = 'Tito uživatelé toto issue nevidí, o zmínce se nedozví a nebudou přidáni mezi sledující: %s';
+$s_plugin_ImaticAutoMonitoring_mention_no_access_private = 'Tito uživatelé tuto soukromou poznámku nevidí, o zmínce se nedozví a nebudou přidáni mezi sledující: %s';
+$s_plugin_ImaticAutoMonitoring_mention_unknown = 'Takový uživatel neexistuje: %s';

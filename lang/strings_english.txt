@@ -1,0 +1,6 @@
+<?php
+
+$s_plugin_ImaticAutoMonitoring_title = 'Imatic automonitoring';
+$s_plugin_ImaticAutoMonitoring_mention_no_access = 'These users cannot see this issue, they will not be notified about the mention nor added as monitors: %s';
+$s_plugin_ImaticAutoMonitoring_mention_no_access_private = 'These users cannot see this private note, they will not be notified about the mention nor added as monitors: %s';
+$s_plugin_ImaticAutoMonitoring_mention_unknown = 'No such user: %s';

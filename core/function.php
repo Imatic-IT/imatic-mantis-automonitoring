@@ -122,6 +122,61 @@ function imatic_mention_filter_users_with_access(array $p_user_ids, $p_bugnote_i
 }
 
 /**
+ * Check the @mentions in a note that is still being written.
+ *
+ * The note does not exist yet, so the private-note rule of
+ * access_has_bugnote_level() is replicated here: for a private note the
+ * threshold is raised to private_bugnote_threshold of the issue's project.
+ *
+ * @param int    $p_bug_id
+ * @param string $p_text    Note text as typed so far.
+ * @param bool   $p_private Whether the note will be private.
+ * @return array ['no_access' => [username, ...], 'unknown' => [candidate, ...]]
+ */
+function imatic_mention_check_access($p_bug_id, $p_text, $p_private)
+{
+    $t_result = array('no_access' => array(), 'unknown' => array());
+
+    if (!mention_enabled() || is_blank($p_text)) {
+        return $t_result;
+    }
+
+    $t_candidates = imatic_mention_get_candidates($p_text);
+    if (empty($t_candidates)) {
+        return $t_result;
+    }
+
+    $t_users = imatic_mention_get_users($p_text); # username => id
+    $t_project_id = bug_get_field($p_bug_id, 'project_id');
+    $t_view_threshold = config_get('view_bug_threshold', null, null, $t_project_id);
+
+    foreach ($t_candidates as $t_candidate) {
+        if (!isset($t_users[$t_candidate])) {
+            # The candidate regex only knows ASCII word characters, so it cuts
+            # "@všem" down to "v". Do not report such fragments as typos.
+            if (!preg_match('/' . preg_quote(mentions_tag() . $t_candidate, '/') . '\p{L}/u', $p_text)) {
+                $t_result['unknown'][] = $t_candidate;
+            }
+            continue;
+        }
+
+        $t_user_id = (int)$t_users[$t_candidate];
+        $t_threshold = $t_view_threshold;
+
+        if ($p_private) {
+            $t_private_threshold = config_get('private_bugnote_threshold', null, $t_user_id, $t_project_id);
+            $t_threshold = max($t_threshold, $t_private_threshold);
+        }
+
+        if (!access_has_bug_level($t_threshold, $p_bug_id, $t_user_id)) {
+            $t_result['no_access'][] = $t_candidate;
+        }
+    }
+
+    return $t_result;
+}
+
+/**
  * Given a string find the @ mentioned users.  The return list is a valid
  * list of valid mentioned users.  The list will be empty if the mentions
  * feature is disabled.

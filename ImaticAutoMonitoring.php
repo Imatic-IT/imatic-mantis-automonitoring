@@ -9,8 +9,8 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
     public function register()
     {
         $this->name = 'Imatic automonitoring';
-        $this->description = 'Auto monitoring when someone is @mentioned or assigned or changed status ';
-        $this->version = '0.2.0';
+        $this->description = 'Auto monitoring when someone is @mentioned or assigned or changed status; warns when a mentioned user cannot see the issue';
+        $this->version = '0.3.0';
         $this->requires = [
             'MantisCore' => '2.0.0',
         ];
@@ -24,6 +24,9 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
     {
         return [
             'automonitoring_when_mentioned' => true,
+            # Show a warning under the note textarea while typing when an
+            # @mentioned user cannot see the issue (or the private note).
+            'mention_access_warning' => true,
             'automonitoring_when_commented' => true,
             'automonitoring_when_assigned' => true,
             'automonitoring_when_unassigned' => true,
@@ -48,7 +51,37 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
             'EVENT_BUGNOTE_ADD' => 'event_bugnote_add_hook',
             'EVENT_BUG_ACTION' => 'event_bug_action_hook',
             'EVENT_REPORT_BUG' => 'event_bug_add_hook',
+            'EVENT_BUGNOTE_ADD_FORM' => 'event_bugnote_add_form',
         ];
+    }
+
+    /**
+     * Render the (hidden) warning row and load the script that checks the
+     * @mentions in the note being written against the users' access.
+     */
+    public function event_bugnote_add_form($p_event, $p_bug_id = null)
+    {
+        if (!plugin_config_get('mention_access_warning') || !$p_bug_id || !mention_enabled()) {
+            return;
+        }
+
+        $t_settings = htmlspecialchars(json_encode([
+            'bug_id' => (int)$p_bug_id,
+            'check_url' => plugin_page('check_mentions'),
+            'lang' => [
+                'no_access' => plugin_lang_get('mention_no_access'),
+                'no_access_private' => plugin_lang_get('mention_no_access_private'),
+                'unknown' => plugin_lang_get('mention_unknown'),
+            ],
+        ]), ENT_QUOTES);
+
+        echo '<tr id="imatic-mention-access-row" hidden>'
+            . '<td colspan="2">'
+            . '<div id="imatic-mention-access-warning" class="alert alert-warning no-margin"></div>'
+            . '</td>'
+            . '</tr>';
+        echo '<script id="imaticAutoMonitoringMentions" data-settings="' . $t_settings . '"'
+            . ' src="' . plugin_file('mention_access_check.js') . '&v=' . $this->version . '"></script>';
     }
 
 
