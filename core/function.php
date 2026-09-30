@@ -99,6 +99,29 @@ function imatic_is_excluded_from_monitoring($p_user_id)
 }
 
 /**
+ * Keep only the mentioned users who can see the given note.
+ *
+ * Same check core uses to decide who gets the mention e-mail: view_bug_threshold
+ * on the issue, raised to private_bugnote_threshold for a private note.
+ *
+ * @param array $p_user_ids
+ * @param int   $p_bugnote_id
+ * @return array user ids with access
+ */
+function imatic_mention_filter_users_with_access(array $p_user_ids, $p_bugnote_id)
+{
+    if (empty($p_user_ids)) {
+        return array();
+    }
+
+    return access_has_bugnote_level_filter(
+        config_get('view_bug_threshold'),
+        $p_bugnote_id,
+        $p_user_ids
+    );
+}
+
+/**
  * Given a string find the @ mentioned users.  The return list is a valid
  * list of valid mentioned users.  The list will be empty if the mentions
  * feature is disabled.

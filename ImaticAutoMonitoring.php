@@ -69,7 +69,16 @@ class ImaticAutoMonitoringPlugin extends MantisPlugin
         if (plugin_config_get('automonitoring_when_mentioned')) {
             $t_text = bugnote_get_text($p_bugnote_id);
 
-            foreach (imatic_mention_get_users($t_text) as $t_mentioned_user_id) {
+            # Only users who can actually see the note. Being @mentioned must
+            # not put somebody on the monitor list of an issue (or a private
+            # note) they have no access to - core applies the same filter
+            # before it mails the mentioned users (bugnote_process_mentions).
+            $t_mentioned_user_ids = imatic_mention_filter_users_with_access(
+                array_values(imatic_mention_get_users($t_text)),
+                $p_bugnote_id
+            );
+
+            foreach ($t_mentioned_user_ids as $t_mentioned_user_id) {
                 $t_user_ids[] = (int)$t_mentioned_user_id;
             }
         }
